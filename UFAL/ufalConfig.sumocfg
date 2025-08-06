@@ -7,7 +7,7 @@
 
     <input>
         <net-file value="ufalNetwork.net.xml"/>
-        <route-files value="ufalRoutes.rou.xml"/>
+        <route-files value="ufalRoutes1.rou.xml"/>
     </input>
 
     <time>

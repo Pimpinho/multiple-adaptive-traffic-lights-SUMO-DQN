@@ -40,3 +40,6 @@ total_naquela_hora = df.loc[indice_pico, 'total_veiculos']
 print(df.iloc[indice_pico])
 print('\n')
 print(df.iloc[indice_pico+1])
+
+# duarouter -n ufalNetwork.net.xml -t ufalTrips.trips.xml --additional ufalTyp.typ.xml -o ufalRoutes.rou.xml
+# sumo-gui -c .\ufalConfig.sumocfg   

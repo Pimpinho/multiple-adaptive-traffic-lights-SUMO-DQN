@@ -1,0 +1,13 @@
+<vTypes>
+    <vType id="bus2" accel="1.0" decel="4.5" length="10" maxSpeed="15" />
+    <vType id="bus3" accel="1.0" decel="4.5" length="12" maxSpeed="15" />
+    <vType id="truck4" accel="1.0" decel="4.5" length="14" maxSpeed="13" />
+    <vType id="truck5" accel="1.0" decel="4.5" length="16" maxSpeed="13" />
+    <vType id="truck6" accel="1.0" decel="4.5" length="18" maxSpeed="13" />
+    <vType id="truck7" accel="1.0" decel="4.5" length="20" maxSpeed="12" />
+    <vType id="truck8" accel="1.0" decel="4.5" length="22" maxSpeed="12" />
+    <vType id="truck9" accel="1.0" decel="4.5" length="24" maxSpeed="12" />
+    <vType id="car" accel="1.0" decel="4.5" length="5" maxSpeed="25" />
+    <vType id="motorcycle" accel="1.0" decel="4.5" length="2" maxSpeed="28" />
+    <vType id="undefined" accel="1.0" decel="4.5" length="6" maxSpeed="20" />
+</vTypes>

@@ -1,0 +1,24 @@
+<trips>
+    <!-- SENTIDO C -->
+    <flow id="C_bus2" type="bus2" begin="0" end="3600" number="120" from="cOrigem" to="cDestino" />
+    <flow id="C_bus3" type="bus3" begin="0" end="3600" number="25" from="cOrigem" to="cDestino" />
+    <flow id="C_truck4" type="truck4" begin="0" end="3600" number="10" from="cOrigem" to="cDestino" />
+    <flow id="C_truck5" type="truck5" begin="0" end="3600" number="8" from="cOrigem" to="cDestino" />
+    <flow id="C_truck6" type="truck6" begin="0" end="3600" number="11" from="cOrigem" to="cDestino" />
+    <flow id="C_truck7" type="truck7" begin="0" end="3600" number="3" from="cOrigem" to="cDestino" />
+    <flow id="C_truck8" type="truck8" begin="0" end="3600" number="1" from="cOrigem" to="cDestino" />
+    <flow id="C_truck9" type="truck9" begin="0" end="3600" number="2" from="cOrigem" to="cDestino" />
+    <flow id="C_car" type="car" begin="0" end="3600" number="694" from="cOrigem" to="cDestino" />
+    <flow id="C_motorcycle" type="motorcycle" begin="0" end="3600" number="602" from="cOrigem" to="cDestino" />
+    <flow id="C_undefined" type="undefined" begin="0" end="3600" number="16" from="cOrigem" to="cDestino" />
+
+    <!-- SENTIDO D -->
+    <flow id="D_bus2" type="bus2" begin="0" end="3600" number="115" from="dOrigem" to="dDestino" />
+    <flow id="D_bus3" type="bus3" begin="0" end="3600" number="17" from="dOrigem" to="dDestino" />
+    <flow id="D_truck4" type="truck4" begin="0" end="3600" number="3" from="dOrigem" to="dDestino" />
+    <flow id="D_truck5" type="truck5" begin="0" end="3600" number="6" from="dOrigem" to="dDestino" />
+    <flow id="D_truck6" type="truck6" begin="0" end="3600" number="5" from="dOrigem" to="dDestino" />
+    <flow id="D_car" type="car" begin="0" end="3600" number="603" from="dOrigem" to="dDestino" />
+    <flow id="D_motorcycle" type="motorcycle" begin="0" end="3600" number="132" from="dOrigem" to="dDestino" />
+    <flow id="D_undefined" type="undefined" begin="0" end="3600" number="6" from="dOrigem" to="dDestino" />
+</trips>
