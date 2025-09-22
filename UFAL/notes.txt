@@ -1,0 +1,12 @@
+TEMPO DE ESPERA TOTAL (TEMPO FIXO): 238588.00 segundos
+semáforo D (Descendo) 6022602047
+semáforo C1 (Subindo) 2621508821
+semáforo C2 (Subindo) 795820931
+    
+duarouter -n ufalNetwork.net.xml -t ufalTrips.trips.xml --additional ufalTyp.typ.xml -o ufalRoutes.rou.xml -->
+sumo-gui -c .\ufalConfig.sumocfg
+
+Questões
+    Possibilidade de aumentar artificialmente a entrada de carros na simulação
+    Aumentar tempo de simulação (não será condizente aos dados do DNIT)
+    Aumentar as epochs (leva mais tempo de processamento)
