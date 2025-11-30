@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2025-11-23 14:15:07 by Eclipse SUMO netedit Version 1.22.0
+<!-- generated on 2025-11-27 23:14:51 by Eclipse SUMO netedit Version 1.22.0
 -->
 
 <neteditConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/neteditConfiguration.xsd">
 
     <input>
-        <sumocfg-file value="ufalConfig.sumocfg"/>
         <sumo-net-file value="ufalNetwork.net.xml"/>
     </input>
 

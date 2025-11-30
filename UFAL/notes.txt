@@ -3,10 +3,31 @@ semáforo D (Descendo) 6022602047
 semáforo C1 (Subindo) 2621508821
 semáforo C2 (Subindo) 795820931
     
-duarouter -n ufalNetwork.net.xml -t ufalTrips.trips.xml --additional ufalTyp.typ.xml -o ufalRoutes.rou.xml -->
+COMANDOS MAIS USADOS:
+
+duarouter -n ufalNetwork.net.xml -t ufalTripsHorarioPico.trips.xml --additional ufalTyp.typ.xml -o ufalRoutes.rou.xml -->
+
+sumo -c ufalConfig.sumocfg --vehroute-output test.xml
+
 sumo-gui -c .\ufalConfig.sumocfg
 
 Questões
     Possibilidade de aumentar artificialmente a entrada de carros na simulação
+         (não foi preciso, a simulação está segruindo fielmente aos dados reais)
+
     Aumentar tempo de simulação (não será condizente aos dados do DNIT)
+        Resolvido, ajustes de simulação como <max-depart-delay>-1</max-depart-delay> e departLane="best" departPos="last" resolveram problema da fila de veiculos que estavam na fila de inserção da simulação.
+
+    Simulação MUITO lenta
+        Resolvido: Ajustado o eixo das coordenadas onde a simulação estava rodando.
+
     Aumentar as epochs (leva mais tempo de processamento)
+
+Perguntar ao Geymerson: Queremos avaliar as metricas ao longo do treinamento ou queremos comparar as metricas do cenario com e sem treinamento apenas?
+
+ 
+sumo -c ufalConfig.sumocfg --vehroute-output test.xml
+
+problemas encontrados durante a simulação:
+    Importação do OSM com muita informação, muitos nodes, o que deixou a simulação muito lenta (ao pegar os dados em tempo real)
+        Simulação foi otimizada, Sem perda de informação real.
