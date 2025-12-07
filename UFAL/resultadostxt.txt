@@ -1,0 +1,22 @@
+RESULTADOS BASELINE
+  Throughput:        3292
+  Travel Time:       321.32s
+  Waiting Time:      952.52
+  Queue Length:      44.76
+  Stops/vehicle:     0.98
+  CO₂ Emission:      579,826.89
+  Fuel Consumption:  187,974.17
+  Phase switches:     {'tl1': 51, 'tl2': 51, 'tl3': 51}
+
+  ============ RESULTADOS DO DQN ============
+# Total reward:       -15.00
+# Throughput:         641
+# Travel Time:        453.17s
+# Waiting Time:       458.17
+# Queue Length:       29.22
+# Stops/vehicle:      1.93
+# CO₂ Emission:       777,631.60
+# Fuel Consumption:   252,100.15
+# Phase switches:     {'tl1': 67, 'tl2': 77, 'tl3': 632}
+
+

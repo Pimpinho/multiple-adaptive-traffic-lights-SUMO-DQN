@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # 1) Cria o ambiente usando o SUMO-GUI
     env = SUMOEnv(
         sumo_binary="sumo-gui",  # <<< IMPORTANTE para ver a simulação
-        sumo_cfg=r"C:\Users\USUARIO(A)\Documents\GitHub\adaptative-traffic-lights\UFAL\sumo\ufalConfig.sumocfg",
+        sumo_cfg="C:\\Users\\abraao\\Documents\\GitHub\\adaptative-traffic-lights\\UFAL\\sumo\\ufalConfig.sumocfg",
         tl_ids=("tl1", "tl2", "tl3"),
         lanes_by_tl={
             "tl1": [

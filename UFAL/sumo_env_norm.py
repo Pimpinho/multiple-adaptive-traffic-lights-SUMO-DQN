@@ -60,7 +60,7 @@ LANE_MAX_WAITING = {
 class SUMOEnv:
     def __init__(self,
                  sumo_binary="sumo",         # "sumo" or "sumo-gui"
-                 sumo_cfg="C:\\Users\\USUARIO(A)\\Documents\\GitHub\\adaptative-traffic-lights\\UFAL\\ufalConfig.sumocfg",
+                 sumo_cfg="C:\\Users\\abraao\\Documents\\GitHub\\adaptative-traffic-lights\\UFAL\\sumo\\ufalConfig.sumocfg",
                  tl_ids=("tl1","tl2","tl3"),
                  lanes_by_tl=None,
                  step_length=1.0,
