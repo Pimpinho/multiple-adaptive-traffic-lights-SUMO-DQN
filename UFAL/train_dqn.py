@@ -19,7 +19,7 @@ BATCH_SIZE = 64
 BUFFER_CAPACITY = 50_000
 TARGET_UPDATE_STEPS = 1000
 
-NUM_EPISODES = 15         # ajuste depois
+NUM_EPISODES = 20     # ajuste depois
 MAX_STEPS_PER_EPISODE = 720  # 3600s / 5s (control_interval=5)
 
 EPS_START = 1.0
@@ -151,7 +151,7 @@ def train():
     env = SUMOEnv(
         sumo_binary="sumo",
         # se quiser ver a simulação, troque por "sumo-gui"
-        sumo_cfg="C:\\Users\\USUARIO(A)\\Documents\\GitHub\\adaptative-traffic-lights\\UFAL\\ufalConfig.sumocfg",
+        sumo_cfg=r"C:\Users\USUARIO(A)\Documents\GitHub\adaptative-traffic-lights\UFAL\sumo\ufalConfig.sumocfg",
         tl_ids=("tl1", "tl2", "tl3"),
         lanes_by_tl={
             "tl1": [
@@ -176,7 +176,7 @@ def train():
     # Estado inicial só para descobrir dimensão
     state = env.reset()
     state_dim = len(state)
-    action_dim = 3  # 0=tl1, 1=tl2, 2=tl3
+    action_dim = 4  # 0=tl1, 1=tl2, 2=tl3, 3=no OP
 
     print(f"State dim: {state_dim}, Action dim: {action_dim}")
 
@@ -213,9 +213,21 @@ def train():
             if done:
                 break
 
+        # fim do episódio
+        stats = env.get_episode_stats()
+
         mean_loss = np.mean(episode_losses) if episode_losses else 0.0
-        print(f"[Episode {episode:03d}] total_reward={total_reward:.2f} "
-              f"mean_loss={mean_loss:.4f} epsilon={epsilon:.3f}")
+        print(
+            f"\n--------------------------------------------------------------------------------\n"
+            f"[Episode {episode:03d}] \n"
+            f"total_reward={total_reward:.2f} \n"
+            f"mean_loss={mean_loss:.4f} epsilon={epsilon:.3f} \n"
+            f"finished={stats['finished_vehicles']} \n"
+            f"mean_travel={stats['mean_travel_time']:.2f}s \n"
+            f"mean_halted={stats['mean_halted_per_step']:.2f}\n"
+            f"--------------------------------------------------------------------------------\n"
+        )
+
 
     # Salva pesos
     torch.save(agent.q_net.state_dict(), "dqn_single_agent.pth")

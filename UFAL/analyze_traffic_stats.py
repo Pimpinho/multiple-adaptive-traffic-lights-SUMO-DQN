@@ -7,7 +7,7 @@ import csv
 # Normalizar os dados de extração de acordo com o ambiente SUMO usado
 
 SUMO_BINARY = "sumo"  # ou "sumo-gui"
-SUMO_CFG = r"C:\Users\USUARIO(A)\Documents\GitHub\adaptative-traffic-lights\UFAL\ufalConfig.sumocfg"
+SUMO_CFG = r"C:\Users\USUARIO(A)\Documents\GitHub\adaptative-traffic-lights\UFAL\sumo\ufalConfig.sumocfg"
 
 # ---- Lanes monitoradas ----
 lanes_by_tl = {

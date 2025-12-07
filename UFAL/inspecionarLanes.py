@@ -4,7 +4,7 @@ import traci
 import sys
 
 SUMO_BINARY = os.environ.get("SUMO_BINARY", "sumo")
-SUMOCFG = r"C:\Users\USUARIO(A)\Documents\GitHub\adaptative-traffic-lights\UFAL\ufalConfig.sumocfg"
+SUMOCFG = r"C:\Users\USUARIO(A)\Documents\GitHub\adaptative-traffic-lights\UFAL\sumo\ufalConfig.sumocfg"
 
 traci.start([SUMO_BINARY, "-c", SUMOCFG])
 print("Traffic Lights (ids):")

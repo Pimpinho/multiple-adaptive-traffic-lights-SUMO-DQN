@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # 1) Cria o ambiente usando o SUMO-GUI
     env = SUMOEnv(
         sumo_binary="sumo-gui",  # <<< IMPORTANTE para ver a simulação
-        sumo_cfg="C:\\Users\\USUARIO(A)\\Documents\\GitHub\\adaptative-traffic-lights\\UFAL\\ufalConfigcopy.sumocfg",
+        sumo_cfg=r"C:\Users\USUARIO(A)\Documents\GitHub\adaptative-traffic-lights\UFAL\sumo\ufalConfig.sumocfg",
         tl_ids=("tl1", "tl2", "tl3"),
         lanes_by_tl={
             "tl1": [
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # 2) Reset ambiente e descobre o tamanho do estado
     state = env.reset()
     state_dim = state.shape[0]
-    action_dim = 3  # ações: 0=tl1, 1=tl2, 2=tl3
+    action_dim = 4  # ações: 0=tl1, 1=tl2, 2=tl3
 
     print(f"State dim = {state_dim}, action dim = {action_dim}")
 
@@ -106,6 +106,6 @@ if __name__ == "__main__":
         # OPCIONAL: desacelerar um pouco para você conseguir ver melhor no GUI
         # time.sleep(0.1)
 
-    print("\n=== Episódio finalizado ===")
+    print("\n==================== Episódio finalizado ====================")
     print(f"Total reward (episódio) = {total_reward:.2f}")
     env.close()

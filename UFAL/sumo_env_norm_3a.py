@@ -60,7 +60,7 @@ LANE_MAX_WAITING = {
 class SUMOEnv:
     def __init__(self,
                  sumo_binary="sumo",         # "sumo" or "sumo-gui"
-                 sumo_cfg="C:\\Users\\USUARIO(A)\\Documents\\GitHub\\adaptative-traffic-lights\\UFAL\\ufalConfig.sumocfg",
+                 sumo_cfg="C:\\Users\\USUARIO(A)\\Documents\\GitHub\\adaptative-traffic-lights\\UFAL\\ufalConfigcopy.sumocfg",
                  tl_ids=("tl1","tl2","tl3"),
                  lanes_by_tl=None,
                  step_length=1.0,
@@ -99,16 +99,6 @@ class SUMOEnv:
 
         # para reward com delta de waiting time
         self.last_total_wait = 0.0
-        
-        # para reward com delta de halted vehicles
-        self.last_total_halted = 0.0
-
-        # métricas por episódio
-        self.episode_halted_sum = 0.0
-        self.episode_steps = 0
-        self.episode_finished_veh = 0
-        self.episode_travel_time_sum = 0.0
-
 
     def start_sumo(self, gui=False):
         sumo_bin = self.SUMO_BINARY
@@ -145,55 +135,41 @@ class SUMOEnv:
                 pass
         self.connected = False
 
- ####
-
     def reset(self):
-        # (re)inicia o SUMO
+        # Start sumo and run a tiny warmup
         if self.connected:
             try:
-                traci.load([
-                    "-c", self.sumo_cfg,
-                    "--step-length", str(self.step_length)
-                ])
+                traci.load(["-c", self.sumo_cfg, "--step-length", str(self.step_length)])
             except Exception:
-                # fallback: restart process (mais seguro)
+                # fallback: restart process (safer)
                 self.close()
                 self.start_sumo(gui=False)
         else:
             self.start_sumo(gui=False)
 
-        # zera acumuladores por episódio
-        self.episode_steps = 0
-        self.episode_halted_sum = 0.0
-        self.episode_finished_veh = 0
-        self.episode_travel_time_sum = 0.0
-
-        # warmup para deixar os veículos aparecerem
+        # warmup steps to let vehicles appear
         for _ in range(5):
             traci.simulationStep()
 
-        # inicializa o acumulador para o reward delta (agora baseado em halted)
-        self.last_total_halted = self._compute_total_halted()
+        # inicializa o acumulador de espera para o reward delta
+        self.last_total_wait = self._compute_total_wait()
 
-        # prepara logging em CSV (se ainda não aberto)
+        # prepare csv logging
         self._open_csv()
-
-        # retorna estado inicial
         return self._get_state()
 
- #####
-
     def step(self, action, episode=0, step_idx=0):
-  
-        # aplica ação
-        if action == 1:
+        """
+        action: 0,1,2 -> advance phase for tl1/tl2/tl3 respectively
+        Returns: next_state, reward, done, info
+        """
+        # apply action: advance phase of selected TL
+        if action == 0:
             self._advance_tl(self.tl_ids[0])
-        elif action == 2:
+        elif action == 1:
             self._advance_tl(self.tl_ids[1])
-        elif action == 3:
+        elif action == 2:
             self._advance_tl(self.tl_ids[2])
-        elif action == 0:
-            pass  # no-op
         else:
             raise ValueError("Invalid action")
 
@@ -201,46 +177,25 @@ class SUMOEnv:
         for _ in range(self.control_steps):
             traci.simulationStep()
 
-            # atualiza métricas de episódio por step
-            step_halted = self._compute_total_halted()
-            self.episode_halted_sum += step_halted
-            self.episode_steps += 1
-
-            # veículos que finalizaram neste step
-            arrived_ids = traci.simulation.getArrivedIDList()
-            self.episode_finished_veh += len(arrived_ids)
-
-            sim_time = traci.simulation.getTime()
-            for vid in arrived_ids:
-                try:
-                    dep_time = traci.vehicle.getDepartureTime(vid)
-                    self.episode_travel_time_sum += (sim_time - dep_time)
-                except Exception:
-                    # se der erro em algum veículo, ignora
-                    pass
-
         # próximo estado
         next_state = self._get_state()
 
-        # total de halted atual
-        total_halted = self._compute_total_halted()
+        # total de waiting time atual (em segundos)
+        total_wait = self._compute_total_wait()
 
-        # reward com delta de halted:
-        # se o número de veículos parados diminuiu, reward > 0
-        reward = self.last_total_halted - total_halted
-        self.last_total_halted = total_halted
+        # reward com delta de waiting time:
+        # se o espera total diminuiu, reward > 0
+        # se aumentou, reward < 0
+        reward = self.last_total_wait - total_wait
+        self.last_total_wait = total_wait
 
-        done = False  # ainda controlamos término fora
+        done = False  # controle de término fica fora (episódio = duração da simulação)
 
         # log
         sim_time = traci.simulation.getTime()
         phases = [traci.trafficlight.getPhase(t) for t in self.tl_ids]
-        self._log_csv(episode, step_idx, sim_time, total_halted, action, phases)
-
+        self._log_csv(episode, step_idx, sim_time, total_wait, action, phases)
         return next_state, reward, done, {"sim_time": sim_time, "phases": phases}
-
-
-#####
 
     def _compute_total_wait(self):
         """Soma o waiting time de todas as lanes monitoradas."""
@@ -252,17 +207,6 @@ class SUMOEnv:
                 except Exception:
                     total_wait += 0.0
         return total_wait
-
-    def _compute_total_halted(self):
-        """Soma o número de veículos parados em todas as lanes monitoradas."""
-        total_halted = 0
-        for lanes in self.lanes_by_tl.values():
-            for lane_id in lanes:
-                try:
-                    total_halted += traci.lane.getLastStepHaltingNumber(lane_id)
-                except Exception:
-                    total_halted += 0
-        return float(total_halted)
 
     def _advance_tl(self, tl_id):
         cur = traci.trafficlight.getPhase(tl_id)
@@ -309,25 +253,6 @@ class SUMOEnv:
 
         return np.array(vec, dtype=np.float32)
 
-    def get_episode_stats(self):
-        """Retorna métricas agregadas do episódio atual."""
-        if self.episode_steps > 0:
-            mean_halted = self.episode_halted_sum / self.episode_steps
-        else:
-            mean_halted = 0.0
-
-        if self.episode_finished_veh > 0:
-            mean_travel_time = self.episode_travel_time_sum / self.episode_finished_veh
-        else:
-            mean_travel_time = 0.0
-
-        return {
-            "finished_vehicles": int(self.episode_finished_veh),
-            "mean_travel_time": float(mean_travel_time),
-            "mean_halted_per_step": float(mean_halted),
-        }
-
-
     def _open_csv(self):
         if self.csvfile is None:
             fname = "sumo_env_log.csv"
@@ -335,13 +260,13 @@ class SUMOEnv:
             self.csvwriter = csv.writer(self.csvfile)
             self.csvwriter.writerow([
                 "episode", "step", "sim_time",
-                "total_Halted", "action",
+                "total_waiting_time", "action",
                 "phase_tl1", "phase_tl2", "phase_tl3"
             ])
             self.csvfile.flush()
 
-    def _log_csv(self, episode, step, sim_time, total_Halted, action, phases):
+    def _log_csv(self, episode, step, sim_time, total_wait, action, phases):
         if self.csvwriter:
-            row = [episode, step, sim_time, total_Halted, action] + phases
+            row = [episode, step, sim_time, total_wait, action] + phases
             self.csvwriter.writerow(row)
             self.csvfile.flush()

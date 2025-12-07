@@ -5,7 +5,7 @@ semáforo C2 (Subindo) 795820931
     
 COMANDOS MAIS USADOS:
 
-duarouter -n ufalNetwork.net.xml -t ufalTripsHorarioPico.trips.xml --additional ufalTyp.typ.xml -o ufalRoutes.rou.xml -->
+duarouter -n ufalNetwork.net.xml -t ufalTripsHorarioPico.trips.xml --additional ufalTyp.typ.xml -o ufalRoutes.rou.xml
 
 sumo -c ufalConfig.sumocfg --vehroute-output test.xml
 
