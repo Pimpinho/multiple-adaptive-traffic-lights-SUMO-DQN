@@ -6,7 +6,7 @@ import random
 
 if __name__ == "__main__":
     # Ajuste aqui:
-    SUMO_BINARY = "sumo"       # ou "sumo-gui" para ver graficamente
+    SUMO_BINARY = "sumo"       
     SUMO_CFG = "C:\\Users\\USUARIO(A)\\Documents\\GitHub\\adaptative-traffic-lights\\UFAL\\ufalConfig.sumocfg"  # caminho para seu arquivo .sumocfg
     
     env = SUMOEnv(sumo_binary=SUMO_BINARY,

@@ -151,7 +151,7 @@ def train():
     env = SUMOEnv(
         sumo_binary="sumo",
         # se quiser ver a simulação, troque por "sumo-gui"
-        sumo_cfg=r"C:\Users\abraao\Documents\GitHub\adaptative-traffic-lights\UFAL\sumo\ufalConfig.sumocfg",
+        sumo_cfg="C:\\Users\\USUARIO(A)\\Documents\\GitHub\\adaptative-traffic-lights\\UFAL\\sumo\\ufalConfig.sumocfg",
         tl_ids=("tl1", "tl2", "tl3"),
         lanes_by_tl={
             "tl1": [
