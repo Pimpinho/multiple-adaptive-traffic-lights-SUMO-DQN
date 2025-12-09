@@ -4,10 +4,12 @@ from subprocess import Popen
 import time
 import csv
 
-# Normalizar os dados de extração de acordo com o ambiente SUMO usado
+# Normalizar os dados de extração de acordo com o ambiente SUMO usado.
+# Captura o maximo número de veículos e o máximo tempo de espera em cada faixa monitorada.
+
 
 SUMO_BINARY = "sumo"  # ou "sumo-gui"
-SUMO_CFG = r"C:\Users\USUARIO(A)\Documents\GitHub\adaptative-traffic-lights\UFAL\sumo\ufalConfig.sumocfg"
+SUMO_CFG = "C:\\Users\\USUARIO(A)\\Documents\\GitHub\\adaptative-traffic-lights\\UFAL\\sumo\\ufalConfig.sumocfg"
 
 # ---- Lanes monitoradas ----
 lanes_by_tl = {
@@ -100,4 +102,4 @@ if __name__ == "__main__":
 
     save_csv(max_count, max_wait)
 
-    print("\n🎉 ANALISE COMPLETA — veja 'lane_stats.csv' para tabela detalhada.\n")
+    print("\n veja 'lane_stats.csv' para tabela detalhada.\n")

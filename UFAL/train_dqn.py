@@ -2,6 +2,8 @@
 import random
 import numpy as np
 from collections import deque
+import matplotlib.pyplot as plt
+import csv
 
 import torch
 import torch.nn as nn
@@ -13,18 +15,21 @@ from sumo_env_norm import SUMOEnv
 # ==========================
 # 1) Hyperparâmetros
 # ==========================
-GAMMA = 0.99
-LR = 1e-4
-BATCH_SIZE = 64
-BUFFER_CAPACITY = 50_000
-TARGET_UPDATE_STEPS = 1000
-
-NUM_EPISODES = 20     # ajuste depois
-MAX_STEPS_PER_EPISODE = 720  # 3600s / 5s (control_interval=5)
+LR = 5e-5
+BATCH_SIZE = 128
+BUFFER_CAPACITY = 100_000
+TARGET_UPDATE_STEPS = 10_000
 
 EPS_START = 1.0
-EPS_END = 0.05
-EPS_DECAY_STEPS = 20_000     # steps globais
+EPS_END = 0.10
+EPS_DECAY_STEPS = 100_000
+
+GAMMA = 0.99
+
+NUM_EPISODES = 50
+MAX_STEPS_PER_EPISODE = 720  # 3600s / 5s (control_interval = 5)
+
+
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -38,7 +43,6 @@ class ReplayBuffer:
         self.buffer = deque(maxlen=capacity)
 
     def push(self, state, action, reward, next_state, done):
-        # tudo como numpy/float simples aqui
         self.buffer.append((state, action, reward, next_state, done))
 
     def sample(self, batch_size):
@@ -58,7 +62,7 @@ class ReplayBuffer:
 
 
 # ==========================
-# 3) Rede Q (MLP simples)
+# 3) Q-Network
 # ==========================
 class QNetwork(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_dim=128):
@@ -76,7 +80,7 @@ class QNetwork(nn.Module):
 
 
 # ==========================
-# 4) Agente DQN
+# 4) Agente
 # ==========================
 class DQNAgent:
     def __init__(self, state_dim, action_dim):
@@ -89,14 +93,9 @@ class DQNAgent:
 
         self.optimizer = optim.Adam(self.q_net.parameters(), lr=LR)
         self.replay_buffer = ReplayBuffer(BUFFER_CAPACITY)
-
         self.global_step = 0
 
     def select_action(self, state, epsilon):
-        """
-        state: numpy array (state_dim,)
-        epsilon: float
-        """
         if random.random() < epsilon:
             return random.randint(0, self.action_dim - 1)
         else:
@@ -134,7 +133,7 @@ class DQNAgent:
 
 
 # ==========================
-# 5) Função auxiliar: epsilon por step global
+# 5) Epsilon decay
 # ==========================
 def get_epsilon(global_step):
     if global_step >= EPS_DECAY_STEPS:
@@ -144,13 +143,16 @@ def get_epsilon(global_step):
 
 
 # ==========================
-# 6) Loop de treinamento
+# 6) Loop de Treinamento
 # ==========================
 def train():
-    # Cria ambiente SUMO
+
+    # ---- Histórico de halted por episódio ----
+    halted_history = []
+
+    # Cria ambiente
     env = SUMOEnv(
         sumo_binary="sumo",
-        # se quiser ver a simulação, troque por "sumo-gui"
         sumo_cfg="C:\\Users\\USUARIO(A)\\Documents\\GitHub\\adaptative-traffic-lights\\UFAL\\sumo\\ufalConfig.sumocfg",
         tl_ids=("tl1", "tl2", "tl3"),
         lanes_by_tl={
@@ -173,12 +175,9 @@ def train():
         control_interval=5
     )
 
-    # Estado inicial só para descobrir dimensão
     state = env.reset()
     state_dim = len(state)
-    action_dim = 4  # 0=tl1, 1=tl2, 2=tl3, 3=no OP
-
-    print(f"State dim: {state_dim}, Action dim: {action_dim}")
+    action_dim = 4  
 
     agent = DQNAgent(state_dim, action_dim)
 
@@ -193,9 +192,7 @@ def train():
 
             next_state, reward, done, info = env.step(action, episode=episode, step_idx=step_idx)
 
-            # IMPORTANTE: reward aqui deve ser deltaWaitingTime no SUMOEnv
             agent.replay_buffer.push(state, action, reward, next_state, done)
-
             loss = agent.update()
             if loss is not None:
                 episode_losses.append(loss)
@@ -206,17 +203,19 @@ def train():
             total_reward += reward
             state = next_state
 
-            # critério de parada opcional
             sim_time = info.get("sim_time", 0.0)
-            if sim_time >= 3600.0:
-                break
-            if done:
+            if sim_time >= 3600.0 or done:
                 break
 
-        # fim do episódio
+        # ---- Coleta métricas ----
         stats = env.get_episode_stats()
 
+        # MÉTRICA DO HALTED TOTAL DO EPISÓDIO
+        halted_ep = stats["mean_halted_per_step"]  # OU stats["total_halted"] se preferir
+        halted_history.append(halted_ep)
+
         mean_loss = np.mean(episode_losses) if episode_losses else 0.0
+
         print(
             f"\n--------------------------------------------------------------------------------\n"
             f"[Episode {episode:03d}] \n"
@@ -229,9 +228,31 @@ def train():
         )
 
 
-    # Salva pesos
+    # =======================================================
+    # 7) SALVAR GRÁFICO DO HALTED
+    # =======================================================
+    plt.figure(figsize=(10,5))
+    plt.plot(halted_history, marker="o")
+    plt.xlabel("Episódio")
+    plt.ylabel("Halted médio por episódio")
+    plt.title("Evolução do halted durante o treinamento")
+    plt.grid(True)
+    plt.savefig("halted_history.png", dpi=300)
+    plt.show()
+
+    # =======================================================
+    # 8) SALVAR CSV
+    # =======================================================
+    with open("halted_history.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["episode", "halted_mean"])
+        for i, h in enumerate(halted_history):
+            writer.writerow([i, h])
+
+    # Salva o modelo
     torch.save(agent.q_net.state_dict(), "dqn_single_agent.pth")
     print("Treinamento finalizado. Modelo salvo em dqn_single_agent.pth")
+
     env.close()
 
 

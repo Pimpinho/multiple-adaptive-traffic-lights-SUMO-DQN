@@ -1,3 +1,6 @@
+# UFAL/sumo_env_norm.py
+# Ambiente SUMO com normalização dos estados baseada em máximos pré-definidos.
+
 import os
 import csv
 import time
@@ -7,6 +10,8 @@ import traci.constants as tc
 from subprocess import Popen
 
 # Máximos extraídos do analyze_traffic_stats
+# São usados para normalizar os estados e evitar que valores muito altos prejudiquem o aprendizado.
+
 LANE_MAX_VEHICLES = {
     "dOrigem_1": 7,
     "E4_1": 15,
@@ -20,7 +25,7 @@ LANE_MAX_VEHICLES = {
     "-E5_2": 17,
     "saidaufal_0": 5,
     "dOrigem_2": 8,
-    "E4_3": 1,   # era 0 -> coloquei 1 pra evitar divisão por zero
+    "E4_3": 1,  
     "-E1_0": 26,
     "saidaufal_1": 4,
     "E1_0": 75,
@@ -45,7 +50,7 @@ LANE_MAX_WAITING = {
     "-E5_2": 441.0,
     "saidaufal_0": 199.0,
     "dOrigem_2": 225.0,
-    "E4_3": 1.0,   # era 0 -> coloquei 1 pra evitar divisão por zero
+    "E4_3": 1.0,   
     "-E1_0": 192.0,
     "saidaufal_1": 140.0,
     "E1_0": 1029.0,
@@ -58,6 +63,8 @@ LANE_MAX_WAITING = {
 }
 
 class SUMOEnv:
+    
+    # Guarda os parametros para uso futuro e deixa ambiente pronto para o sumo_start
     def __init__(self,
                  sumo_binary="sumo",         # "sumo" or "sumo-gui"
                  sumo_cfg="C:\\Users\\USUARIO(A)\\Documents\\GitHub\\adaptative-traffic-lights\\UFAL\\sumo\\ufalConfig.sumocfg",
@@ -92,8 +99,8 @@ class SUMOEnv:
         self.control_interval = control_interval
         assert control_interval % step_length == 0
         self.control_steps = int(control_interval / step_length)
-        self.sumo_proc = None
-        self.connected = False
+        self.sumo_proc = None # será usado para guardar o processo SUMO criado por Popen.
+        self.connected = False # indica se estamos conectados ao TraCI
         self.csvfile = None
         self.csvwriter = None
 
@@ -109,7 +116,7 @@ class SUMOEnv:
         self.episode_finished_veh = 0
         self.episode_travel_time_sum = 0.0
 
-
+    # Inicia o SUMO e conecta ao TraCI
     def start_sumo(self, gui=False):
         sumo_bin = self.SUMO_BINARY
 
@@ -120,36 +127,40 @@ class SUMOEnv:
             "--remote-port", "8813"     # ESSENCIAL para TraCI
         ]
 
-        print("Starting SUMO with command:", cmd)
+        print("\nStarting SUMO with command: sumo -c ufalConfig.sumocfg --step-length 1.0 --remote-port 8813\n", cmd)
 
         # Inicia SUMO
         self.sumo_proc = Popen(cmd)
 
-        # Aguarda SUMO abrir a porta
+        # Aguarda SUMO abrir a porta e estabelecer conexão via TCP com o TraCI
         time.sleep(0.5)
 
         # Conecta ao TraCI
         traci.init(port=8813)
         self.connected = True
 
+    # Fecha a conexão TraCI e termina o processo SUMO. 
+    # Usado apenas ao final de TODOS os episódios.
+    # Entre episódios, apenas reiniciamos a simulação com reset() que usa traci.load().
     def close(self):
         try:
             if self.connected:
                 traci.close()
         except Exception:
             pass
-        if self.sumo_proc:
+        if self.sumo_proc: # se o processo SUMO foi iniciado
             try:
-                self.sumo_proc.terminate()
-            except Exception:
+                self.sumo_proc.terminate() # termina o processo SUMO
+            except Exception: # se der erro (não houver processo aberto), ignora
                 pass
-        self.connected = False
+        self.connected = False # Setar que não estamos mais conectados
 
  ####
 
+    # Reinicia a simulação SUMO e retorna o estado inicial normalizado.
+    # Usado no início de cada episódio.
     def reset(self):
-        # (re)inicia o SUMO
-        if self.connected:
+        if self.connected: # Se já estivermos conectados, apenas reinicia a simulação
             try:
                 traci.load([
                     "-c", self.sumo_cfg,
@@ -162,17 +173,19 @@ class SUMOEnv:
         else:
             self.start_sumo(gui=False)
 
-        # zera acumuladores por episódio
+        # zera acumuladores por episódio (devem ser zerados aqui)
         self.episode_steps = 0
         self.episode_halted_sum = 0.0
         self.episode_finished_veh = 0
         self.episode_travel_time_sum = 0.0
 
         # warmup para deixar os veículos aparecerem
+        # durante os 5 steps de warm-up o DQN não toma decisões.
         for _ in range(5):
             traci.simulationStep()
 
-        # inicializa o acumulador para o reward delta (agora baseado em halted)
+        # inicializa o acumulador para o reward delta baseado em halted
+        # Quase um checkpoint, ele salva o total halted para o calculo do reward
         self.last_total_halted = self._compute_total_halted()
 
         # prepara logging em CSV (se ainda não aberto)
@@ -184,7 +197,9 @@ class SUMOEnv:
  #####
 
     def step(self, action, episode=0, step_idx=0):
-  
+        
+        # Temos 4 ações e duas fases por semáforo:
+        # advance_tl muda a fase.
         # aplica ação
         if action == 1:
             self._advance_tl(self.tl_ids[0])
@@ -198,8 +213,10 @@ class SUMOEnv:
             raise ValueError("Invalid action")
 
         # simula control_interval segundos
-        for _ in range(self.control_steps):
-            traci.simulationStep()
+        # cada step 1.0 segundo
+        # control steps = 5
+        for _ in range(self.control_steps): # for tem que avançar 5 steps
+            traci.simulationStep() # avança 1 step na simulação
 
             # atualiza métricas de episódio por step
             step_halted = self._compute_total_halted()
@@ -220,17 +237,20 @@ class SUMOEnv:
                     pass
 
         # próximo estado
+        # após o loop, pega o estado atualizado
         next_state = self._get_state()
 
-        # total de halted atual
+        # total de halted atual para reward
         total_halted = self._compute_total_halted()
 
-        # reward com delta de halted:
+        # reward com delta de halted: O DELTA mede o efeito imediato da ação.
         # se o número de veículos parados diminuiu, reward > 0
+        # a recompensa se baseia no halted antes da ação e depois da ação.
+        # se o total de halted diminuiu, reward positivo, se aumentou, reward negativo.
         reward = self.last_total_halted - total_halted
         self.last_total_halted = total_halted
-
-        done = False  # ainda controlamos término fora
+        # o reward mede a eficiência da ação em reduzir o número de veículos parados.
+        done = False  
 
         # log
         sim_time = traci.simulation.getTime()
@@ -240,7 +260,7 @@ class SUMOEnv:
         return next_state, reward, done, {"sim_time": sim_time, "phases": phases}
 
 
-#####
+ ####
 
     def _compute_total_wait(self):
         """Soma o waiting time de todas as lanes monitoradas."""
@@ -264,20 +284,24 @@ class SUMOEnv:
                     total_halted += 0
         return float(total_halted)
 
+    # Muda a FASE do semáforo escolhido (tl_id)
     def _advance_tl(self, tl_id):
         cur = traci.trafficlight.getPhase(tl_id)
-        new = (cur + 1) % 2
+        new = (cur + 1) % 2 # alterna entre fase 0 e 1
         traci.trafficlight.setPhase(tl_id, new)
 
+
+    # define como o SUMO é traduzido em dados numéricos para o DQN
+    # Retorna um vetor numpy float32 com os dados normalizados
+    # é chamado 1 vez por episódio no reset e 1 vez por step (a cada ação) total de 721 chamadas por episódio
     def _get_state(self):
-        vec = []
-        # para cada TL, acrescenta (para cada lane: count_norm, wait_norm) e depois a fase
-        for tl in self.tl_ids:
-            lanes = self.lanes_by_tl.get(tl, [])
+        vec = [] 
+        for tl in self.tl_ids: # para cada semáforo (tl1, tl2 e tl3)
+            lanes = self.lanes_by_tl.get(tl, []) # lanes controladas por este semáforo
             for lane in lanes:
                 try:
-                    cnt = traci.lane.getLastStepVehicleNumber(lane)
-                    wait = traci.lane.getWaitingTime(lane)
+                    cnt = traci.lane.getLastStepVehicleNumber(lane) # número de veículos na lane
+                    wait = traci.lane.getWaitingTime(lane) # tempo de espera acumulado na lane
                 except Exception:
                     cnt = 0.0
                     wait = 0.0
@@ -299,14 +323,15 @@ class SUMOEnv:
                 vec.append(float(cnt_norm))
                 vec.append(float(wait_norm))
 
-            # add phase normalizada (0 ou 1, já está em faixa boa)
+             # add phase normalizada (0 ou 1, já está em faixa boa)
             try:
                 phase = traci.trafficlight.getPhase(tl)
             except Exception:
                 phase = 0
-            # como cada tl tem 2 fases (0 ou 1), isso já é "normalizado"
+             # como cada tl tem 2 fases (0 ou 1), isso já é "normalizado"
             vec.append(float(phase))
-
+        # retorna um array de 3 (tl1, tl2 e tl3) x [lanes do semaforo x 2 features(cnt e wait) + 1 phase]
+        # (7 lanes x 2 + 1) + (6 lanes x 2 + 1) + (9 lanes x 2 + 1) = 47 elementos no vetor
         return np.array(vec, dtype=np.float32)
 
     def get_episode_stats(self):

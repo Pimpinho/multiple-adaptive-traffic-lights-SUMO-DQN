@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 # ==========================================
 # INSIRA AQUI OS VALORES MEDIDOS
 # ==========================================
-halted_baseline_mean = 93.47
-halted_dqn_mean = 21.71
+halted_baseline_mean = 64.10
+halted_dqn_mean = 7.87
 # ==========================================
 
 labels = ['Baseline (Sem DQN)', 'Com DQN']

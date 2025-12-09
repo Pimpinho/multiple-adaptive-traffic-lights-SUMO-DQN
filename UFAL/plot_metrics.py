@@ -68,7 +68,7 @@ def plot_all_metrics(baseline, dqn, save=False):
 # ======================================================
 if __name__ == "__main__":
 
-    # Exemplo — substitua pelos seus resultados reais
+    # Exemplo — substituir
     baseline = {
         "mean_travel_time": 12.5,
         "mean_waiting_time": 201.2,

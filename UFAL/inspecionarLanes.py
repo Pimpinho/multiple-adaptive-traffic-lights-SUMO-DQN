@@ -2,7 +2,7 @@
 
 # Inspeciona e imprime informações sobre os semáforos e lanes controladas em uma simulação SUMO.
 # Útil para entender a topologia do tráfego e verificar se as lanes estão corretas.
-# Pega exatamente qual lanes são controladas por cada semáforo.
+# Pega exatamente qual lanes (fala a lane exata e não a via principal) são controladas por cada semáforo.
 
 import os
 import traci
